@@ -1,0 +1,52 @@
+import requests
+from docx import Document
+
+subscription_key = "Subscription_key"
+endpoint = 'https://api.cognitive.microsofttranslator.com'
+location = "eastus"
+target_language = 'pt-br'
+
+def translator_document(input_doc_path, output_doc_path):
+    path = '/translate'
+    constructed_url = endpoint + path
+
+    headers = {
+        'Ocp-Apim-Subscription-Key': subscription_key,
+        'Ocp-Apim-Subscription-Region': location,
+        'Content-type': 'application/json'
+    }
+
+    document = Document(input_doc_path)
+    extracted_text = []
+    for para in document.paragraphs:
+        extracted_text.append({'Text': para.text})
+
+    if not extracted_text:
+        print("No text found in the document.")
+        return
+
+    params = {
+        'api-version': '3.0',
+        'to': target_language
+    }
+
+    try:
+        request = requests.post(constructed_url, params=params, headers=headers, json=extracted_text)
+        response = request.json()
+        
+        translated_doc = Document()
+        for i, para_response in enumerate(response):
+            if 'translations' in para_response and len(para_response['translations']) > 0:
+                translated_text = para_response['translations'][0]['text']
+                translated_doc.add_paragraph(translated_text)
+            else:
+                # If translation fails, add original text or a placeholder
+                translated_doc.add_paragraph(extracted_text[i]['Text'] + " [Translation Failed]")
+
+        translated_doc.save(output_doc_path)
+        print(f"Translated document saved to {output_doc_path}")
+
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
