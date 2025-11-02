@@ -50,3 +50,9 @@ def translator_document(input_doc_path, output_doc_path):
         print(f"API request failed: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+
+input_doc = ''
+output_doc = ''
+translator_document(input_doc, output_doc)
